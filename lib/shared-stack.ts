@@ -1,7 +1,5 @@
 import * as cdk from "aws-cdk-lib";
-import * as rds from "aws-cdk-lib/aws-rds";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
-import { readFileSync } from "fs";
 
 export class SharedStack extends cdk.Stack {
 
@@ -15,12 +13,18 @@ export class SharedStack extends cdk.Stack {
         this.vpc = new ec2.Vpc(this, "vegafolio-vpc", {
             cidr: "10.0.0.0/16",
             natGateways: 0,
+            vpcName: 'vegafolio-vpc',
             subnetConfiguration: [
                 {
                     name: "public-vpc",
                     cidrMask: 24,
                     subnetType: ec2.SubnetType.PUBLIC,
                 },
+                {
+                    name: "private-vpc",
+                    cidrMask: 24,
+                    subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+                }
             ],
         });
     }

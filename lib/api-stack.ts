@@ -38,6 +38,7 @@ export class APIStack extends cdk.Stack {
             handler: "handler",
             entry: "./src/lambda_functions/backend.ts",
         });
+        
 
         // Vegafolio - REST API
         const api = new apigateway.LambdaRestApi(this, "Vegafolio REST API", {

@@ -27,11 +27,11 @@ export const handler = async (
             throw new Error("secret string is empty");
         }
 
-        const { password } = JSON.parse(secretString);
+        const { password, username } = JSON.parse(secretString);
 
         const connection = mysql.createConnection({
             host: host, // Database EndPoint Address
-            user: "root",
+            user: username,
             password: password,
             database: database,
         });

@@ -25,32 +25,32 @@ export class RoutingStack extends cdk.Stack {
         // );
 
         // MX Record (Email)
-        // new route53.MxRecord(this, "MxRecord", {
-        //     zone: vegafolioZone,
-        //     recordName: "vegafolio.com",
-        //     values: [
-        //         {
-        //             hostName: "1 aspmx.l.google.com.",
-        //             priority: 10,
-        //         },
-        //         {
-        //             hostName: "5 alt1.aspmx.l.google.com.",
-        //             priority: 10,
-        //         },
-        //         {
-        //             hostName: "5 alt2.aspmx.l.google.com.",
-        //             priority: 10,
-        //         },
-        //         {
-        //             hostName: "10 alt3.aspmx.l.google.com.",
-        //             priority: 10,
-        //         },
-        //         {
-        //             hostName: "10 alt4.aspmx.l.google.com.",
-        //             priority: 10,
-        //         },
-        //     ],
-        // });
+        new route53.MxRecord(this, "MxRecord", {
+            zone: vegafolioZone,
+            recordName: "vegafolio.com",
+            values: [
+                {
+                    hostName: "aspmx.l.google.com.",
+                    priority: 1,
+                },
+                {
+                    hostName: "alt1.aspmx.l.google.com.",
+                    priority: 5,
+                },
+                {
+                    hostName: "alt2.aspmx.l.google.com.",
+                    priority: 5,
+                },
+                {
+                    hostName: "alt3.aspmx.l.google.com.",
+                    priority: 10,
+                },
+                {
+                    hostName: "alt4.aspmx.l.google.com.",
+                    priority: 10,
+                },
+            ],
+        });
 
         // const ec2AppPublicIPAddress = cdk.Fn.importValue(
         //     "ec2AppPublicIPAddress"

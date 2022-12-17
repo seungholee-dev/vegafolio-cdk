@@ -6,7 +6,7 @@ import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as codedeploy from "aws-cdk-lib/aws-codedeploy"
+import * as codedeploy from "aws-cdk-lib/aws-codedeploy";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
@@ -27,7 +27,7 @@ export class LandingStack extends cdk.Stack {
         // S3 Bucket
         const landingPageBucket = new s3.Bucket(this, "LandingPageBucket", {
             bucketName: "vegafolio-landing-page-bucket",
-            removalPolicy: RemovalPolicy.DESTROY
+            removalPolicy: RemovalPolicy.DESTROY,
         });
 
         // Route 53
@@ -48,7 +48,11 @@ export class LandingStack extends cdk.Stack {
                 domainName: "*.vegafolio.com",
                 hostedZone: vegafolioZone,
                 region: "us-east-1",
-                subjectAlternativeNames: ["www.vegafolio.com", "*.vegafolio.com", "vegafolio.com"]
+                subjectAlternativeNames: [
+                    "www.vegafolio.com",
+                    "*.vegafolio.com",
+                    "vegafolio.com",
+                ],
             }
         );
 
@@ -71,43 +75,46 @@ export class LandingStack extends cdk.Stack {
         );
 
         // Cloudfront Security Header Policy -> For better security
-        const responseHeaderPolicy = new cloudfront.ResponseHeadersPolicy(
-            this,
-            "SecurityHeadersResponseHeaderPolicy",
-            {
-                comment: "Security headers response header policy",
-                securityHeadersBehavior: {
-                    contentSecurityPolicy: {
-                        override: true,
-                        contentSecurityPolicy: "default-src 'self'",
-                    },
-                    strictTransportSecurity: {
-                        override: true,
-                        accessControlMaxAge: Duration.days(2 * 365),
-                        includeSubdomains: true,
-                        preload: true,
-                    },
-                    contentTypeOptions: {
-                        override: true,
-                    },
-                    referrerPolicy: {
-                        override: true,
-                        referrerPolicy:
-                            cloudfront.HeadersReferrerPolicy
-                                .STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
-                    },
-                    xssProtection: {
-                        override: true,
-                        protection: true,
-                        modeBlock: true,
-                    },
-                    frameOptions: {
-                        override: true,
-                        frameOption: cloudfront.HeadersFrameOption.DENY,
-                    },
-                },
-            }
-        );
+        // const responseHeaderPolicy = new cloudfront.ResponseHeadersPolicy(
+        //     this,
+        //     "SecurityHeadersResponseHeaderPolicy",
+        //     {
+        //         comment: "Security headers response header policy",
+
+        //         securityHeadersBehavior: {
+        //             contentSecurityPolicy: {
+        //                 override: true,
+        //                 contentSecurityPolicy: "default-src 'self'",
+        //             },
+        //             strictTransportSecurity: {
+        //                 override: true,
+        //                 accessControlMaxAge: Duration.days(2 * 365),
+        //                 includeSubdomains: true,
+        //                 preload: true,
+        //             },
+        //             contentTypeOptions: {
+        //                 override: true,
+        //             },
+
+        //             referrerPolicy: {
+        //                 override: true,
+        //                 referrerPolicy:
+        //                     cloudfront.HeadersReferrerPolicy
+        //                         .STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+        //             },
+
+        //             xssProtection: {
+        //                 override: true,
+        //                 protection: true,
+        //                 modeBlock: true,
+        //             },
+        //             frameOptions: {
+        //                 override: true,
+        //                 frameOption: cloudfront.HeadersFrameOption.DENY,
+        //             },
+        //         },
+        //     }
+        // );
 
         // Cloudfront
         const cloudfrontDistribution = new cloudfront.Distribution(
@@ -119,12 +126,17 @@ export class LandingStack extends cdk.Stack {
                 defaultRootObject: "index.html",
                 defaultBehavior: {
                     origin: new origins.S3Origin(landingPageBucket, {
-                        originAccessIdentity: cloudfrontOAI
+                        originAccessIdentity: cloudfrontOAI,
                     }),
-                    viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                    responseHeadersPolicy: responseHeaderPolicy
+                    // originRequestPolicy:
+                        // cloudfront.OriginRequestPolicy.CORS_S3_ORIGIN,
+                    
+                    viewerProtocolPolicy:
+                        ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    // responseHeadersPolicy: responseHeaderPolicy,
+                    responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS, // This works! -> Needs to be changed after studying.
+                    cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Cache Disabled cause the updated landing page is not auto updated.
                 },
-                
             }
         );
 

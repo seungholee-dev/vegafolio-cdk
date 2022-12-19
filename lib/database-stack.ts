@@ -1,7 +1,7 @@
 import * as rds from "aws-cdk-lib/aws-rds";
 import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
-import { NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Duration } from "aws-cdk-lib";
 
@@ -46,29 +46,41 @@ export class DatabaseStack extends cdk.Stack {
                 securityGroups: [dbSG],
             }
         );
-        
+
         // Lambda Security Group
-        const lambdaSG = new ec2.SecurityGroup(this, 'LambdaSG', {
-            vpc
-        })
+        const lambdaSG = new ec2.SecurityGroup(this, "LambdaSG", {
+            vpc,
+        });
 
         // DB Security Group Ingress Rules
         dbSG.addIngressRule(
             lambdaSG,
             ec2.Port.tcp(3306), // MySQL port
-            'Lambda to MySQL DB'
-        )
-        
+            "Lambda to MySQL DB"
+        );
+
+        // RDS PROXY
+        const dbProxy = new rds.DatabaseProxy(this, "VegafolioRDSProxy", {
+            proxyTarget: rds.ProxyTarget.fromInstance(instance),
+            secrets: [instance.secret!],
+            securityGroups: [dbSG],
+            vpc,
+            requireTLS: false,
+            vpcSubnets: vpc.selectSubnets({
+                subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+            }),
+        });
+
         // Lambda Function Info
-        const rdsLambdaFunction = new NodejsFunction(this, 'rdsLambdaFN', {
-            entry: './src/lambda_functions/rds-init.ts',
+        const rdsLambdaFunction = new NodejsFunction(this, "rdsLambdaFN", {
+            entry: "./src/lambda_functions/rds-init.ts",
             runtime: Runtime.NODEJS_16_X,
             timeout: Duration.minutes(3), // Preventing coldstart time
-            functionName: 'handler',
+            functionName: "handler",
             environment: {
-                DB_ENDPOINT_ADDRESS: instance.dbInstanceEndpointAddress,
-                DB_NAME: 'vegafoliodb',
-                DB_SECRET_ARN: instance.secret?.secretFullArn || '', // Not Fetching Password directly but via SecretARN for security :) 
+                DB_ENDPOINT_ADDRESS: dbProxy.endpoint,
+                DB_NAME: "vegafoliodb",
+                DB_SECRET_ARN: instance.secret?.secretFullArn || "", // Not Fetching Password directly but via SecretARN for security :)
             },
             vpc,
             vpcSubnets: vpc.selectSubnets({
@@ -76,11 +88,11 @@ export class DatabaseStack extends cdk.Stack {
             }),
             bundling: {
                 externalModules: [
-                    'aws-sdk', // No Need to include AWS SDK as we are using native aws-sdk.
-                ]
+                    "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
+                ],
             },
-            securityGroups: [lambdaSG]
-        })
+            securityGroups: [lambdaSG],
+        });
 
         instance.secret?.grantRead(rdsLambdaFunction);
     }

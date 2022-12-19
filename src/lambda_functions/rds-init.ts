@@ -36,21 +36,24 @@ export const handler = async (
             database: database,
         });
 
+        const query = `CREATE TABLE IF NOT EXISTS ${database}.company (id INT NOT NULL,
+                            name VARCHAR(45) NOT NULL,
+                            location_id INT NULL,
+                            PRIMARY KEY (id)
+                            ) ENGINE = InnoDB`;
+
         connection.connect();
         return new Promise((resolve, reject) => {
-            connection.query(
-                "CREATE TABLE seungho_table (id INT);",
-                (err, result) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve({ statusCode: 200, body: result });
-                    }
+            connection.query(query, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({ statusCode: 200, body: result });
                 }
-            );
+            });
         });
 
-        // connection.query("INSERT INTO seungho_table VALUES (10);", (err, result) => {})
+        // connection.query("INSERT INTO `mydb`.`company` (`id`, `name`, `location_id`) VALUES (1, South Korea, NULL);", (err, result) => {})
         // connection.query("SELECT * FROM seungho_table", (err, result) => {
         //     console.log(result);
         // })
@@ -60,7 +63,7 @@ export const handler = async (
         console.log(e);
         console.log("ERROR WHILE TRYING TO CONNECT TO DB FROM LAMBDA");
         return {
-            error: e
-        }
+            error: e,
+        };
     }
 };

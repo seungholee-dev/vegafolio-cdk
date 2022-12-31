@@ -45,9 +45,32 @@ export const handler = async (
             error: e,
         };
     }
-    
-    await connection.query("SHOW TABLES", (err, results, fields) => {
-        callback(err, results);
-        console.log(results)
+
+    let queryResult = await new Promise(function (resolve, reject) {
+        const sqlQuery = "SELECT * from company";
+        connection.query(sqlQuery, (err, results) => {
+            if (err) {
+                reject({
+                    statusCode: 400,
+                    headers: {
+                        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+                        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+                    },
+                    body: JSON.stringify(err),
+                });
+            } else {
+                resolve({
+                    statusCode: 200,
+                    headers: {
+                        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+                        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+                    },
+                    body: JSON.stringify(results),
+                });
+            }
+        });
     });
+    connection.end();
+
+    return queryResult;
 };

@@ -7,6 +7,8 @@ import { DeployStack } from "../lib/deploy-stack";
 import { RoutingStack } from "../lib/routing-stack";
 import { DatabaseStack } from "../lib/database-stack";
 import { LandingStack } from "../lib/landing-stack";
+import { APIStack } from "../lib/api-stack";
+import { database } from "firebase-admin";
 
 const app = new cdk.App();
 
@@ -55,7 +57,18 @@ const databaseStack = new DatabaseStack(app, "database-stack", {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
     },
+
 });
+
+// REST API Stack
+const apiStack = new APIStack(app, "api-stack", {    
+    vpc: sharedStack.vpc,
+    stackName: "api-stack",
+    env: {
+        region: process.env.CDK_DEFAULT_REGION,
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+    },
+})
 
 // Landing Page Stack - Cloudfront, Route53, S3
 const landingStack = new LandingStack(app, "landing-stack", {
@@ -70,4 +83,6 @@ const landingStack = new LandingStack(app, "landing-stack", {
 // Adding Dependency to stacks!!
 ec2Stack.addDependency(sharedStack);
 databaseStack.addDependency(sharedStack);
+apiStack.addDependency(sharedStack);
+apiStack.addDependency(databaseStack);
 landingStack.addDependency(sharedStack)

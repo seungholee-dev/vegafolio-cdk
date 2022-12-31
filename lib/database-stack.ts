@@ -50,6 +50,7 @@ export class DatabaseStack extends cdk.Stack {
         // Lambda Security Group
         const lambdaSG = new ec2.SecurityGroup(this, "LambdaSG", {
             vpc,
+            securityGroupName: "LambdaSG",
         });
 
         // DB Security Group Ingress Rules
@@ -76,7 +77,7 @@ export class DatabaseStack extends cdk.Stack {
             entry: "./src/lambda_functions/rds-init.ts",
             runtime: Runtime.NODEJS_16_X,
             timeout: Duration.minutes(3), // Preventing coldstart time
-            functionName: "handler",
+            functionName: "rds-init-function",
             environment: {
                 DB_ENDPOINT_ADDRESS: dbProxy.endpoint,
                 DB_NAME: "vegafoliodb",
@@ -95,5 +96,22 @@ export class DatabaseStack extends cdk.Stack {
         });
 
         instance.secret?.grantRead(rdsLambdaFunction);
+
+        new cdk.CfnOutput(this, "LambdaSG_ID", {
+            value: lambdaSG.securityGroupId,
+            exportName: "lambdaSGID",
+        });
+
+        new cdk.CfnOutput(this, "DB_ENDPOINT_ADDRESS", {
+            value: dbProxy.endpoint,
+            description: "DB Proxy endpoint",
+            exportName: "dbEndpointAddress",
+        });
+
+        new cdk.CfnOutput(this, "DB_SECRET_ARN", {
+            value: instance.secret?.secretFullArn || "",
+            description: "DB instance secret arn",
+            exportName: "dbSecretARN",
+        });
     }
 }

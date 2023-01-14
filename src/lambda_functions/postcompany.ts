@@ -7,6 +7,7 @@ export const handler = async (
     context: Context,
     callback: APIGatewayProxyCallback
 ) => {
+    let connection;
     try {
         const host = process.env.DB_ENDPOINT_ADDRESS || "";
         const database = process.env.DB_NAME || "";
@@ -29,37 +30,14 @@ export const handler = async (
 
         const { password, username } = JSON.parse(secretString);
 
-        const connection = mysql.createConnection({
+        connection = mysql.createConnection({
             host: host, // Database EndPoint Address
             user: username,
             password: password,
             database: database,
         });
 
-        const query = `CREATE TABLE IF NOT EXISTS ${database}.company (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            name VARCHAR(45) NOT NULL,
-                            location_id INT NULL,
-                            PRIMARY KEY (id)
-                            ) ENGINE = InnoDB`;
-
         connection.connect();
-        return new Promise((resolve, reject) => {
-            connection.query(query, (err, result) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ statusCode: 200, body: result });
-                }
-            });
-        });
-
-        // connection.query("INSERT INTO `mydb`.`company` (`id`, `name`, `location_id`) VALUES (1, South Korea, NULL);", (err, result) => {})
-        // connection.query("SELECT * FROM seungho_table", (err, result) => {
-        //     console.log(result);
-        // })
-
-        connection.end();
     } catch (e) {
         console.log(e);
         console.log("ERROR WHILE TRYING TO CONNECT TO DB FROM LAMBDA");
@@ -67,4 +45,33 @@ export const handler = async (
             error: e,
         };
     }
+
+    let queryResult = new Promise(function (resolve, reject) {
+        const sqlQuery = "INSERT INTO company VALUES (null, 'Google', null)";
+        connection.query(sqlQuery, (err, results) => {
+            if (err) {
+                reject({
+                    statusCode: 400,
+                    body: JSON.stringify(err),
+                });
+            } else {
+                resolve({
+                    statusCode: 200,
+                    body: JSON.stringify(results),
+                });
+            }
+        });
+    });
+
+    const response = queryResult
+        .then((res) => {
+            console.log(res);
+            return res;
+        })
+        .catch((err) => {
+            console.log(err);
+            return err;
+        });
+    connection.end();
+    return response;
 };

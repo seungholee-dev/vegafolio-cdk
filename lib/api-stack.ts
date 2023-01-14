@@ -6,6 +6,7 @@ import * as rds from "aws-cdk-lib/aws-rds";
 import * as iam from "aws-cdk-lib/aws-iam";
 
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { Duration } from "aws-cdk-lib";
 
 export interface APISTACKProps extends cdk.StackProps {
     vpc: ec2.Vpc;
@@ -32,7 +33,7 @@ export class APIStack extends cdk.Stack {
                 environment: {
                     GOOGLE_APPLICATION_CREDENTIALS:
                         // "vegafolio-dafea-firebase-adminsdk-9o6i0-21b4b88a93.json",
-                        "firebase-service-account-secret.json"
+                        "firebase-service-account-secret.json",
                 },
             }
         );
@@ -43,6 +44,7 @@ export class APIStack extends cdk.Stack {
             "APIGateWay Token Authorizer",
             {
                 handler: lambdaAuthorizer,
+                resultsCacheTtl: Duration.minutes(0) // Disable Authorizer caching
             }
         );
 
@@ -98,22 +100,46 @@ export class APIStack extends cdk.Stack {
         //     defaultMethodOptions: {
         //         authorizer: auth,
         //     },
-        //     proxy: true 
+        //     proxy: true
         // });
 
-        const api = new apigateway.RestApi(this, "VegafolioRESTAPI",{
+        const api = new apigateway.RestApi(this, "VegafolioRESTAPI", {
             // defaultMethodOptions: {
             //     authorizer: auth
             // },
-            restApiName: 'vegafolio-rest-api'
-        })
+            restApiName: "vegafolio-rest-api",
+        });
 
         //  Company Function
-        const companyFunction = new NodejsFunction(this, "company", {
+        const getCompanyFunction = new NodejsFunction(this, "getCompanyFunction", {
             runtime: lambda.Runtime.NODEJS_16_X,
             functionName: "get-company",
             handler: "handler",
-            entry: "./src/lambda_functions/company.ts",
+            entry: "./src/lambda_functions/getcompany.ts",
+            environment: {
+                DB_ENDPOINT_ADDRESS: cdk.Fn.importValue("dbEndpointAddress"),
+                DB_NAME: "vegafoliodb",
+                DB_SECRET_ARN: cdk.Fn.importValue("dbSecretARN"),
+            },
+            vpc,
+            // vpcSubnets: vpc.selectSubnets({
+            //     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+            // }),
+            bundling: {
+                externalModules: [
+                    "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
+                ],
+            },
+            securityGroups: [ExistingLambdaSG],
+            role: backendRole,
+        });
+
+        //  Company Function
+        const postCompanyFunction = new NodejsFunction(this, "postCompanyFunction", {
+            runtime: lambda.Runtime.NODEJS_16_X,
+            functionName: "post-company",
+            handler: "handler",
+            entry: "./src/lambda_functions/postcompany.ts",
             environment: {
                 DB_ENDPOINT_ADDRESS: cdk.Fn.importValue("dbEndpointAddress"),
                 DB_NAME: "vegafoliodb",
@@ -133,8 +159,20 @@ export class APIStack extends cdk.Stack {
         });
 
         const companyResource = api.root.addResource("company");
-        companyResource.addMethod("GET", new apigateway.LambdaIntegration(companyFunction), {
-            authorizer: auth
-        });
+        companyResource.addMethod(
+            "GET",
+            new apigateway.LambdaIntegration(getCompanyFunction),
+            {
+                authorizer: auth,
+            }
+        );
+
+        companyResource.addMethod(
+            "POST",
+            new apigateway.LambdaIntegration(postCompanyFunction),
+            {
+                authorizer: auth,
+            }
+        );
     }
 }

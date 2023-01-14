@@ -23,6 +23,7 @@ export class SharedStack extends cdk.Stack {
                     name: "private-vpc",
                     cidrMask: 24,
                     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+
                 }
             ],
         });

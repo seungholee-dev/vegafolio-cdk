@@ -46,31 +46,32 @@ export const handler = async (
         };
     }
 
-    let queryResult = await new Promise(function (resolve, reject) {
-        const sqlQuery = "SELECT * from company";
+    let queryResult = new Promise(function (resolve, reject) {
+        const sqlQuery = "SELECT * FROM company";
         connection.query(sqlQuery, (err, results) => {
             if (err) {
                 reject({
                     statusCode: 400,
-                    headers: {
-                        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-                        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-                    },
                     body: JSON.stringify(err),
                 });
             } else {
                 resolve({
                     statusCode: 200,
-                    headers: {
-                        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-                        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-                    },
                     body: JSON.stringify(results),
                 });
             }
         });
     });
-    connection.end();
 
-    return queryResult;
+    const response = queryResult
+        .then((res) => {
+            console.log(res);
+            return res;
+        })
+        .catch((err) => {
+            console.log(err);
+            return err;
+        });
+    connection.end();
+    return response;
 };

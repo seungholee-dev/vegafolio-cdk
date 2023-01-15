@@ -46,8 +46,12 @@ export const handler = async (
         };
     }
 
+    let incomingData = JSON.parse(event.body);
+
     let queryResult = new Promise(function (resolve, reject) {
-        const sqlQuery = "INSERT INTO company VALUES (null, 'Google', null)";
+        const sqlQuery = `INSERT INTO company VALUES (default, ${connection.escape(
+            incomingData.name
+        )}, null)`;
         connection.query(sqlQuery, (err, results) => {
             if (err) {
                 reject({
@@ -62,7 +66,6 @@ export const handler = async (
             }
         });
     });
-
     const response = queryResult
         .then((res) => {
             console.log(res);

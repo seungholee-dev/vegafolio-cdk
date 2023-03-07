@@ -1,6 +1,7 @@
 import { Context, APIGatewayProxyCallback, APIGatewayEvent } from "aws-lambda";
 import * as aws from "aws-sdk";
 import * as mysql from "mysql";
+import { parse } from "path";
 
 export const handler = async (
     event: APIGatewayEvent,
@@ -8,13 +9,18 @@ export const handler = async (
     callback: APIGatewayProxyCallback
 ) => {
     let connection;
+    const host = process.env.DB_ENDPOINT_ADDRESS || "";
+    const database = process.env.DB_NAME || "";
+    const dbSecretARN = process.env.DB_SECRET_ARN || "";
+    let password;
+    let username;
+
+    // Check if SecretManager is responding (e.g. on Local this shouldn't work)
     try {
-        const host = process.env.DB_ENDPOINT_ADDRESS || "";
-        const database = process.env.DB_NAME || "";
-        const dbSecretARN = process.env.DB_SECRET_ARN || "";
         const secretManager = new aws.SecretsManager({
             region: "us-west-1",
         });
+
         const secretParams: aws.SecretsManager.GetSecretValueRequest = {
             SecretId: dbSecretARN,
         };
@@ -28,8 +34,16 @@ export const handler = async (
             throw new Error("secret string is empty");
         }
 
-        const { password, username } = JSON.parse(secretString);
+        const parsedSecretString = JSON.parse(secretString);
+        password = parsedSecretString.password;
+        username = parsedSecretString.username;
+    } catch (e) {
+        // Local env (if error caused when fetching from secret manager)
+        password = "password";
+        username = "root";
+    }
 
+    try {
         connection = mysql.createConnection({
             host: host, // Database EndPoint Address
             user: username,
@@ -39,10 +53,10 @@ export const handler = async (
 
         connection.connect();
     } catch (e) {
-        console.log(e);
         console.log("ERROR WHILE TRYING TO CONNECT TO DB FROM LAMBDA");
         return {
-            error: e,
+            statusCode: 400,
+            body: JSON.stringify(e),
         };
     }
 
@@ -65,12 +79,10 @@ export const handler = async (
 
     const response = queryResult
         .then((res) => {
-            console.log(res);
-            return res;
+            return { statusCode: 200, body: JSON.stringify(res) };
         })
         .catch((err) => {
-            console.log(err);
-            return err;
+            return { statusCode: 400, body: JSON.stringify(err) };
         });
     connection.end();
     return response;

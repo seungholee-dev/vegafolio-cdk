@@ -1,0 +1,7 @@
+{
+    "getCompanyFunctionE64BC942": {
+        "DB_ENDPOINT_ADDRESS": "host.docker.internal",
+        "DB_NAME": "vegafoliodb",
+        "DB_SECRET_ARN": "SDLFKJSDFDFSLJDFLJ"
+    }
+}

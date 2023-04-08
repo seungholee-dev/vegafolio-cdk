@@ -1,26 +1,28 @@
-// const admin = require("firebase-admin");
-// admin.initializeApp();
+const admin = require("firebase-admin");
+const serviceCredential = require('./firebase-service-account-secret.json')
+admin.initializeApp({
+    credential: admin.credential.cert(serviceCredential)
+});
 
 exports.handler = function (event, context, callback) {
     var jwt = event.authorizationToken; // Header needs to be "Authorization" and when retrieving it has to be authorizationToken
 
-    // admin
-    //     .auth()
-    //     .verifyIdToken(jwt)
-    //     .then((response) => {
-    //         callback(null, generatePolicy("user", "Allow", event.methodArn));
-    //         // callback(null, generatePolicy('user', 'Deny', event.methodArn));
-    //     })
-    //     .catch((e) => {
-    //         callback(null, generatePolicy("user", "Deny", event.methodArn));
-    //     });
+    admin
+        .auth()
+        .verifyIdToken(jwt)
+        .then((response) => {
+            callback(null, generatePolicy("user", "Allow", event.methodArn));
+        })
+        .catch((e) => {
+            callback(null, generatePolicy("user", "Deny", event.methodArn));
+        });
 
-    // TEST CODE
-    if (jwt == "DONE") {
-        callback(null, generatePolicy("user", "Allow", event.methodArn));
-    } else {
-        callback(null, generatePolicy("user", "Deny", event.methodArn));
-    }
+    // // TEST CODE
+    // if (jwt == "DONE") {
+    //     callback(null, generatePolicy("user", "Allow", event.methodArn));
+    // } else {
+    //     callback(null, generatePolicy("user", "Deny", event.methodArn));
+    // }
 };
 
 // Help function to generate an IAM policy

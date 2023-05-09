@@ -30,11 +30,11 @@ export class APIStack extends cdk.Stack {
                 handler: "handler",
                 functionName: "authorizer-function",
                 entry: "./src/lambda_functions/authorizer.js",
-                environment: {
-                    GOOGLE_APPLICATION_CREDENTIALS:
-                        // "vegafolio-dafea-firebase-adminsdk-9o6i0-21b4b88a93.json",
-                        "firebase-service-account-secret.json",
-                },
+                // environment: {
+                //     GOOGLE_APPLICATION_CREDENTIALS:
+                //         // "vegafolio-dafea-firebase-adminsdk-9o6i0-21b4b88a93.json",
+                //         "firebase-service-account-secret.json",
+                // },
             }
         );
 

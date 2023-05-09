@@ -36,12 +36,17 @@ export const handler = async (
             database: database,
         });
 
-        const query = `CREATE TABLE IF NOT EXISTS ${database}.company (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            name VARCHAR(45) NOT NULL,
-                            location_id INT NULL,
-                            PRIMARY KEY (id)
-                            ) ENGINE = InnoDB`;
+        
+        // const query = `CREATE TABLE IF NOT EXISTS ${database}.company (
+        //                     id INT NOT NULL AUTO_INCREMENT,
+        //                     name VARCHAR(45) NOT NULL,
+        //                     location_id INT NULL,
+        //                     PRIMARY KEY (id)
+        //                     ) ENGINE = InnoDB`;
+
+        const query = `
+            DROP TABLE ${database}.company
+        `
 
         connection.connect();
         return new Promise((resolve, reject) => {

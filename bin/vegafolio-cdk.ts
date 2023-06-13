@@ -82,7 +82,9 @@ const landingStack = new LandingStack(app, "landing-stack", {
 
 // Adding Dependency to stacks!!
 ec2Stack.addDependency(sharedStack);
+databaseStack.addDependency(ec2Stack);
 databaseStack.addDependency(sharedStack);
 apiStack.addDependency(sharedStack);
 apiStack.addDependency(databaseStack);
+
 landingStack.addDependency(sharedStack)

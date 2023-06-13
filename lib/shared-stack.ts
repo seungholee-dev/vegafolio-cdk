@@ -3,7 +3,7 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 
 export class SharedStack extends cdk.Stack {
 
-    // Share VPC
+    // Shared VPC
     public readonly vpc: ec2.Vpc;
 
     constructor(scope, id, props) {
@@ -15,11 +15,13 @@ export class SharedStack extends cdk.Stack {
             vpcName: 'vegafolio-vpc',
             subnetConfiguration: [
                 {
+                    // Public Subnet
                     name: "public-vpc",
                     cidrMask: 24,
                     subnetType: ec2.SubnetType.PUBLIC,
                 },
                 {
+                    // Private Subnet with NAT Gateway
                     name: "private-vpc",
                     cidrMask: 24,
                     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,

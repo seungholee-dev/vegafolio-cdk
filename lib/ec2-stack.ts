@@ -21,6 +21,7 @@ export class EC2Stack extends cdk.Stack {
         // Security Group
         const webserverSG = new ec2.SecurityGroup(this, "webserver-sg", {
             vpc,
+            securityGroupName: "webserver-sg",
             allowAllOutbound: true,
         });
 
@@ -64,9 +65,14 @@ export class EC2Stack extends cdk.Stack {
                 ec2.InstanceClass.BURSTABLE2,
                 ec2.InstanceSize.MICRO
             ),
+
+            // Machine Image: Ubuntu
             machineImage: ec2.MachineImage.genericLinux({
                 "us-west-1": "ami-064562725417500be",
             }),
+            
+            // Helps SSH into the instance
+            // You need to create a key pair in AWS console and download the .pem file in named seungho-key-pair.pem
             keyName: "seungho-key-pair",
         });
 
@@ -79,7 +85,6 @@ export class EC2Stack extends cdk.Stack {
                 hostedZoneId: cdk.Fn.importValue("hostZoneID"),
             }
         );
-
         new route53.ARecord(this, "ARecord", {
             zone: vegafolioZone,
             recordName: "app.vegafolio.com",
@@ -97,5 +102,11 @@ export class EC2Stack extends cdk.Stack {
         //     exportName: "ec2AppPublicIPAddress",
         // });
 
+        // Export ID of webserver security group
+        const webserverSGOutput = new CfnOutput(this, "webserverSGOutput", {
+            value: webserverSG.securityGroupId,
+            description: "ID of webserver security group",
+            exportName: "webserverSGOutput",
+        });
     }
 }

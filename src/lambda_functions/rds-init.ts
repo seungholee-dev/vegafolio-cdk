@@ -1,6 +1,7 @@
 import { Context, APIGatewayProxyCallback, APIGatewayEvent } from "aws-lambda";
 import * as aws from "aws-sdk";
 import * as mysql from "mysql";
+import * as fs from "fs";
 
 export const handler = async (
     event: APIGatewayEvent,
@@ -29,42 +30,35 @@ export const handler = async (
 
         const { password, username } = JSON.parse(secretString);
 
-        const connection = mysql.createConnection({
+        const connectionPool = mysql.createPool({
             host: host, // Database EndPoint Address
             user: username,
             password: password,
             database: database,
+            connectionLimit: 10,
+            connectTimeout: 20000,
+            waitForConnections: true,
+            enableKeepAlive: true,
+            multipleStatements: true,
         });
 
-        
-        // const query = `CREATE TABLE IF NOT EXISTS ${database}.company (
-        //                     id INT NOT NULL AUTO_INCREMENT,
-        //                     name VARCHAR(45) NOT NULL,
-        //                     location_id INT NULL,
-        //                     PRIMARY KEY (id)
-        //                     ) ENGINE = InnoDB`;
+        // Load SQL file contents
+        const query = await fs
+            .readFileSync("table-creation.sql", "utf8")
+            .toString()
+            .trim();
 
-        const query = `
-            DROP TABLE ${database}.company
-        `
-
-        connection.connect();
-        return new Promise((resolve, reject) => {
-            connection.query(query, (err, result) => {
+        // Execute SQL query
+        return await new Promise((resolve, reject) => {
+            connectionPool.query(query, (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
                     resolve({ statusCode: 200, body: result });
                 }
             });
+        }).finally(() => {
         });
-
-        // connection.query("INSERT INTO `mydb`.`company` (`id`, `name`, `location_id`) VALUES (1, South Korea, NULL);", (err, result) => {})
-        // connection.query("SELECT * FROM seungho_table", (err, result) => {
-        //     console.log(result);
-        // })
-
-        connection.end();
     } catch (e) {
         console.log(e);
         console.log("ERROR WHILE TRYING TO CONNECT TO DB FROM LAMBDA");

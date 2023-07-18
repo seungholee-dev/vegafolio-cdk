@@ -47,7 +47,7 @@ export class DatabaseStack extends cdk.Stack {
             {
                 vpc,
                 vpcSubnets: {
-                    subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                    subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
                 },
                 engine: rds.DatabaseInstanceEngine.mysql({
                     version: rds.MysqlEngineVersion.VER_8_0_28,
@@ -70,18 +70,6 @@ export class DatabaseStack extends cdk.Stack {
             "Jump Box to MySQL DB"
         );
 
-        // Creating RDS PROXY for reusing the connection pools. (Requires NAT Gateway attached private subnet)
-        const dbProxy = new rds.DatabaseProxy(this, "VegafolioRDSProxy", {
-            proxyTarget: rds.ProxyTarget.fromInstance(instance),
-            secrets: [instance.secret!],
-            securityGroups: [dbSG],
-            vpc,
-            requireTLS: false,
-            vpcSubnets: vpc.selectSubnets({
-                subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-            }),
-        });
-
         // Create Lambda Function to initialize the DB with tables and data.
         const rdsLambdaFunction = new NodejsFunction(this, "rdsLambdaFN", {
             entry: "./src/lambda_functions/rds-init.ts",
@@ -89,13 +77,13 @@ export class DatabaseStack extends cdk.Stack {
             timeout: Duration.minutes(3), // Preventing coldstart time
             functionName: "rds-init-function",
             environment: {
-                DB_ENDPOINT_ADDRESS: dbProxy.endpoint,
+                DB_ENDPOINT_ADDRESS: instance.dbInstanceEndpointAddress || "",
                 DB_NAME: "vegafoliodb",
                 DB_SECRET_ARN: instance.secret?.secretFullArn || "", // Not Fetching Password directly but via SecretARN for security :)
             },
             vpc,
             vpcSubnets: vpc.selectSubnets({
-                subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
             }),
             bundling: {
                 // Use Command Hooks to include table-creation.sql file in the bundle
@@ -168,7 +156,6 @@ export class DatabaseStack extends cdk.Stack {
         });
 
         // run rdsCustomResource after creation (Add dependency)
-        rdsCustomResource.node.addDependency(dbProxy);
         rdsCustomResource.node.addDependency(instance);
 
 
@@ -179,10 +166,10 @@ export class DatabaseStack extends cdk.Stack {
             exportName: "dbSGID",
         });
 
-        // Export DB Proxy Endpoint
+        // Export DB Endpoint
         new cdk.CfnOutput(this, "DB_ENDPOINT_ADDRESS", {
-            value: dbProxy.endpoint,
-            description: "DB Proxy endpoint",
+            value: instance.dbInstanceEndpointAddress || "",
+            description: "DB instance endpoint",
             exportName: "dbEndpointAddress",
         });
 

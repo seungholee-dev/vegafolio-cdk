@@ -39,7 +39,7 @@ export class APIStack extends cdk.Stack {
 
         // Get DB instance address, secretARN and proxyARN
         const dbSecretARN = cdk.Fn.importValue("dbSecretARN");
-        const dbProxyARN = cdk.Fn.importValue("dbProxyARN");
+        const dbEndpointAddress = cdk.Fn.importValue("dbEndpointAddress");
 
         // Add Ingress Rules to DB Security Group (Who is allowed to access this instance)
         dbSG.addIngressRule(
@@ -47,33 +47,6 @@ export class APIStack extends cdk.Stack {
             ec2.Port.tcp(3306), // MySQL port
             "Lambda to MySQL DB"
         );
-
-        // // Create Lambda Function to initialize the DB with tables and data.
-        // const rdsLambdaFunction = new NodejsFunction(this, "rdsLambdaFN", {
-        //     entry: "./src/lambda_functions/rds-init.ts",
-        //     runtime: Runtime.NODEJS_16_X,
-        //     timeout: Duration.minutes(3), // Preventing coldstart time
-        //     functionName: "rds-init-function",
-        //     environment: {
-        //         DB_ENDPOINT_ADDRESS: dbProxyARN,
-        //         DB_NAME: "vegafoliodb",
-        //         DB_SECRET_ARN: dbSecretARN, // Not Fetching Password directly but via SecretARN for security :)
-        //     },
-        //     vpc,
-        //     vpcSubnets: vpc.selectSubnets({
-        //         subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        //     }),
-        //     bundling: {
-        //         externalModules: [
-        //             "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
-        //         ],
-        //     },
-        //     securityGroups: [lambdaSG],
-        // });
-
-        // TODO Custom Resource to initialize the DB
-        // Triggered when the DB is created
-        
 
         //  Authorizer Lambda Function
         const lambdaAuthorizer = new NodejsFunction(
@@ -117,39 +90,6 @@ export class APIStack extends cdk.Stack {
             )
         );
 
-        // Backend AWS Lambda function
-        // const backend = new NodejsFunction(this, "Backend", {
-        //     runtime: lambda.Runtime.NODEJS_16_X,
-        //     functionName: "vegafolio-backend",
-        //     handler: "handler",
-        //     entry: "./src/lambda_functions/backend.ts",
-        //     environment: {
-        //         DB_ENDPOINT_ADDRESS: cdk.Fn.importValue("dbEndpointAddress"),
-        //         DB_NAME: "vegafoliodb",
-        //         DB_SECRET_ARN: cdk.Fn.importValue("dbSecretARN"),
-        //     },
-        //     vpc,
-        //     vpcSubnets: vpc.selectSubnets({
-        //         subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        //     }),
-        //     bundling: {
-        //         externalModules: [
-        //             "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
-        //         ],
-        //     },
-        //     securityGroups: [ExistingLambdaSG],
-        //     role: backendRole,
-        // });
-
-        // Vegafolio - REST API
-        // const api = new apigateway.LambdaRestApi(this, "Vegafolio REST API", {
-        //     handler: backend,
-        //     defaultMethodOptions: {
-        //         authorizer: auth,
-        //     },
-        //     proxy: true
-        // });
-
         const api = new apigateway.RestApi(this, "VegafolioRESTAPI", {
             // defaultMethodOptions: {
             //     authorizer: auth
@@ -167,14 +107,11 @@ export class APIStack extends cdk.Stack {
                 handler: "handler",
                 entry: "./src/lambda_functions/getcompany.ts",
                 environment: {
-                    DB_ENDPOINT_ADDRESS: dbProxyARN,
+                    DB_ENDPOINT_ADDRESS: dbEndpointAddress,
                     DB_NAME: "vegafoliodb",
                     DB_SECRET_ARN: dbSecretARN,
                 },
                 vpc,
-                // vpcSubnets: vpc.selectSubnets({
-                //     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                // }),
                 bundling: {
                     externalModules: [
                         "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
@@ -195,14 +132,11 @@ export class APIStack extends cdk.Stack {
                 handler: "handler",
                 entry: "./src/lambda_functions/postcompany.ts",
                 environment: {
-                    DB_ENDPOINT_ADDRESS: dbProxyARN,
+                    DB_ENDPOINT_ADDRESS: dbEndpointAddress,
                     DB_NAME: "vegafoliodb",
                     DB_SECRET_ARN: dbSecretARN
                 },
                 vpc,
-                // vpcSubnets: vpc.selectSubnets({
-                //     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                // }),
                 bundling: {
                     externalModules: [
                         "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.

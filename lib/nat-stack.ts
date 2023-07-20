@@ -77,22 +77,6 @@ export class NatStack extends cdk.Stack {
             }
         );
 
-        new cdk.CfnOutput(this, "seunghotest", {
-            value: `
-            
-            ${natInstance}
-            ${natInstance.instanceId} ${natInstance.instancePrivateIp}
-            ${natInstance.instancePublicIp}
-            =============
-            ${eip}
-            ${eip.ref} ${eip.attrAllocationId}
-            ${eIPAssociation.allocationId} ${eIPAssociation.eip} ${eIPAssociation.networkInterfaceId}
-            ${eip.attrPublicIp} ${eIPAssociation.eip} ${eIPAssociation.instanceId}
-            ${eip.instanceId} ${eip.logicalId} ${eip.transferAddress} 
-            `,
-            exportName: "seunghotest",
-        });
-
         // // Update Private Subnet Route Table
         vpc.isolatedSubnets.forEach((subnet, index) => {
             const route = new ec2.CfnRoute(this, `NAT ROUTE${index + 1}`, {
@@ -103,14 +87,6 @@ export class NatStack extends cdk.Stack {
 
             // Make sure NAT instance is created before creating route
             route.addDependsOn(eIPAssociation);
-                    });
-
-        // vpc.isolatedSubnets.forEach((subnet, index) => {
-        //     (subnet as ec2.Subnet).addRoute("NAT ROUTE", {
-        //         routerType: ec2.RouterType.INSTANCE,
-        //         destinationCidrBlock: "0.0.0.0/0",
-        //         routerId: natInstance.instanceId,
-        //     });
-        // });
+        });
     }
 }

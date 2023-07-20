@@ -9,12 +9,23 @@ import { DatabaseStack } from "../lib/database-stack";
 import { LandingStack } from "../lib/landing-stack";
 import { APIStack } from "../lib/api-stack";
 import { database } from "firebase-admin";
+import { NatStack } from "../lib/nat-stack";
 
 const app = new cdk.App();
 
 // SharedStack (VPC)
 const sharedStack = new SharedStack(app, "shared-stack", {
     stackName: "shared-stack",
+    env: {
+        region: process.env.CDK_DEFAULT_REGION,
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+    },
+});
+
+// NATStack (Nat instance)
+const natStack = new NatStack(app, "nat-stack", {
+    vpc: sharedStack.vpc,
+    stackName: "nat-stack",
     env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -57,18 +68,17 @@ const databaseStack = new DatabaseStack(app, "database-stack", {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
     },
-
 });
 
 // REST API Stack
-const apiStack = new APIStack(app, "api-stack", {    
+const apiStack = new APIStack(app, "api-stack", {
     vpc: sharedStack.vpc,
     stackName: "api-stack",
     env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
     },
-})
+});
 
 // Landing Page Stack - Cloudfront, Route53, S3
 const landingStack = new LandingStack(app, "landing-stack", {
@@ -82,9 +92,10 @@ const landingStack = new LandingStack(app, "landing-stack", {
 
 // Adding Dependency to stacks!!
 ec2Stack.addDependency(sharedStack);
+natStack.addDependency(sharedStack);
 databaseStack.addDependency(ec2Stack);
 databaseStack.addDependency(sharedStack);
 apiStack.addDependency(sharedStack);
 apiStack.addDependency(databaseStack);
 
-landingStack.addDependency(sharedStack)
+landingStack.addDependency(sharedStack);

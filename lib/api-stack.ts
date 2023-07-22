@@ -28,7 +28,6 @@ export class APIStack extends cdk.Stack {
             securityGroupName: "lambda-sg",
         });
 
-
         // Import DB Security Group
         const dbSGID = cdk.Fn.importValue("dbSGID");
         const dbSG = ec2.SecurityGroup.fromSecurityGroupId(
@@ -97,26 +96,32 @@ export class APIStack extends cdk.Stack {
             restApiName: "vegafolio-rest-api",
         });
 
+        // Reuse Variables
+        const runtime = lambda.Runtime.NODEJS_16_X;
+        const handler = "handler";
+        const environment = {
+            DB_ENDPOINT_ADDRESS: dbEndpointAddress,
+            DB_NAME: "vegafoliodb",
+            DB_SECRET_ARN: dbSecretARN,
+        };
+        const bundling = {
+            externalModules: [
+                "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
+            ],
+        };
+
         //  Company Function
         const getCompanyFunction = new NodejsFunction(
             this,
-            "getCompanyFunction",
+            "get-companies-function",
             {
-                runtime: lambda.Runtime.NODEJS_16_X,
-                functionName: "get-company",
-                handler: "handler",
-                entry: "./src/lambda_functions/getcompany.ts",
-                environment: {
-                    DB_ENDPOINT_ADDRESS: dbEndpointAddress,
-                    DB_NAME: "vegafoliodb",
-                    DB_SECRET_ARN: dbSecretARN,
-                },
+                runtime,
+                functionName: "get-companies",
+                handler,
+                entry: "./src/lambda_functions/companies/get-companies.ts",
+                environment,
                 vpc,
-                bundling: {
-                    externalModules: [
-                        "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
-                    ],
-                },
+                bundling,
                 securityGroups: [lambdaSG],
                 role: backendRole,
             }
@@ -125,36 +130,26 @@ export class APIStack extends cdk.Stack {
         //  Company Function
         const postCompanyFunction = new NodejsFunction(
             this,
-            "postCompanyFunction",
+            "post-companies-function",
             {
-                runtime: lambda.Runtime.NODEJS_16_X,
-                functionName: "post-company",
-                handler: "handler",
-                entry: "./src/lambda_functions/postcompany.ts",
-                environment: {
-                    DB_ENDPOINT_ADDRESS: dbEndpointAddress,
-                    DB_NAME: "vegafoliodb",
-                    DB_SECRET_ARN: dbSecretARN
-                },
+                runtime,
+                functionName: "post-companies",
+                handler,
+                entry: "./src/lambda_functions/companies/post-companies.ts",
+                environment,
                 vpc,
-                bundling: {
-                    externalModules: [
-                        "aws-sdk", // No Need to include AWS SDK as we are using native aws-sdk.
-                    ],
-                },
+                bundling,
                 securityGroups: [lambdaSG],
                 role: backendRole,
             }
         );
 
-        const companyResource = api.root.addResource("company");
+        const companyResource = api.root.addResource("companies");
 
         companyResource.addMethod(
             "GET",
             new apigateway.LambdaIntegration(getCompanyFunction),
-            {
-                authorizer: auth,
-            }
+            {}
         );
 
         companyResource.addMethod(

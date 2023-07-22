@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent } from "aws-lambda";
-import { handler } from "../src/lambda_functions/getcompany";
+import { handler } from "../src/lambda_functions/companies/get-companies";
 
 // Get Company Function
 describe('Unitest for getCompany function', () => {

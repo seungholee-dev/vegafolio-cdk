@@ -16,13 +16,6 @@ exports.handler = function (event, context, callback) {
         .catch((e) => {
             callback(null, generatePolicy("user", "Deny", event.methodArn));
         });
-
-    // // TEST CODE
-    // if (jwt == "DONE") {
-    //     callback(null, generatePolicy("user", "Allow", event.methodArn));
-    // } else {
-    //     callback(null, generatePolicy("user", "Deny", event.methodArn));
-    // }
 };
 
 // Help function to generate an IAM policy

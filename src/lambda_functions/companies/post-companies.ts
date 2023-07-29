@@ -1,6 +1,5 @@
 import { Context, APIGatewayProxyCallback, APIGatewayEvent } from "aws-lambda";
-import * as aws from "aws-sdk";
-import * as mysql from "mysql";
+import { getDbConnection, queryDb } from "../db-connector";
 
 export const handler = async (
     event: APIGatewayEvent,
@@ -8,73 +7,33 @@ export const handler = async (
     callback: APIGatewayProxyCallback
 ) => {
     let connection;
+    let queryResult;
+    let companyData = JSON.parse(event.body);
+    const sqlQuery = `INSERT INTO company (name, logo_url, website, industry, size, domain, founded) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
     try {
-        const host = process.env.DB_ENDPOINT_ADDRESS || "";
-        const database = process.env.DB_NAME || "";
-        const dbSecretARN = process.env.DB_SECRET_ARN || "";
-        const secretManager = new aws.SecretsManager({
-            region: "us-west-1",
-        });
-        const secretParams: aws.SecretsManager.GetSecretValueRequest = {
-            SecretId: dbSecretARN,
-        };
-
-        const dbSecret = await secretManager
-            .getSecretValue(secretParams)
-            .promise();
-        const secretString = dbSecret.SecretString || "";
-
-        if (!secretString) {
-            throw new Error("secret string is empty");
-        }
-
-        const { password, username } = JSON.parse(secretString);
-
-        connection = mysql.createConnection({
-            host: host, // Database EndPoint Address
-            user: username,
-            password: password,
-            database: database,
-        });
-
-        connection.connect();
+        connection = await getDbConnection();
+        queryResult = await queryDb(connection, sqlQuery, [
+            companyData.name,
+            companyData.logo_url,
+            companyData.website,
+            companyData.industry || null,
+            companyData.size || null,
+            companyData.domain,
+            companyData.founded || null,
+        ]);
+        connection.end();
     } catch (e) {
-        console.log(e);
-        console.log("ERROR WHILE TRYING TO CONNECT TO DB FROM LAMBDA");
+        console.log("ERROR: ", e);
         return {
-            error: e,
+            statusCode: 400,
+            body: JSON.stringify(e),
         };
     }
 
-    let incomingData = JSON.parse(event.body);
-
-    let queryResult = new Promise(function (resolve, reject) {
-        const sqlQuery = `INSERT INTO company VALUES (default, ${connection.escape(
-            incomingData.name
-        )}, null)`;
-        connection.query(sqlQuery, (err, results) => {
-            if (err) {
-                reject({
-                    statusCode: 400,
-                    body: JSON.stringify(err),
-                });
-            } else {
-                resolve({
-                    statusCode: 200,
-                    body: JSON.stringify(results),
-                });
-            }
-        });
-    });
-    const response = queryResult
-        .then((res) => {
-            console.log(res);
-            return res;
-        })
-        .catch((err) => {
-            console.log(err);
-            return err;
-        });
-    connection.end();
-    return response;
+    return {
+        statusCode: 200,
+        body: JSON.stringify(queryResult),
+    };
 };

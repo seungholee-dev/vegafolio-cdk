@@ -127,6 +127,24 @@ export class APIStack extends cdk.Stack {
             }
         );
 
+//  Company Function
+        const getCompanyByIdFunction = new NodejsFunction(
+            this,
+            "get-company-by-id-function",
+            {
+                runtime,
+                functionName: "get-company-by-id",
+                handler,
+                entry: "./src/lambda_functions/companies/get-company-by-id.ts",
+                environment,
+                vpc,
+                bundling,
+                securityGroups: [lambdaSG],
+                role: backendRole,
+            }
+        );
+
+
         //  Company Function
         const postCompanyFunction = new NodejsFunction(
             this,
@@ -149,7 +167,13 @@ export class APIStack extends cdk.Stack {
         companyResource.addMethod(
             "GET",
             new apigateway.LambdaIntegration(getCompanyFunction),
-            {}
+        );
+
+        const companyByIdResource = companyResource.addResource("{id}");
+
+        companyByIdResource.addMethod(
+            "GET",
+            new apigateway.LambdaIntegration(getCompanyByIdFunction),
         );
 
         companyResource.addMethod(

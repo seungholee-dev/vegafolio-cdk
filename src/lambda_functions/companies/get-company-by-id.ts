@@ -1,7 +1,8 @@
 import { Context, APIGatewayProxyCallback, APIGatewayEvent } from "aws-lambda";
 import { getDbConnection, queryDb } from "../db-connector";
 
-// GET Companies
+
+// GET Company by ID
 export const handler = async (
     event: APIGatewayEvent,
     context: Context,
@@ -9,11 +10,12 @@ export const handler = async (
 ) => {
     let connection;
     let queryResult;
-    const sqlQuery = "SELECT * FROM company";
+    const sqlQuery = "SELECT * FROM company WHERE id = ?";
+    const companyId = event.pathParameters.id;
 
     try {
         connection = await getDbConnection();
-        queryResult = await queryDb(connection, sqlQuery);
+        queryResult = await queryDb(connection, sqlQuery, [companyId]);
         connection.end();
     } catch (e) {
         console.log("ERROR: ", e);
@@ -27,4 +29,3 @@ export const handler = async (
         body: JSON.stringify(queryResult),
     };
 };
-

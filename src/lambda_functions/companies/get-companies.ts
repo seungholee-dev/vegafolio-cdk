@@ -26,4 +26,3 @@ export const handler = async (
         body: JSON.stringify(queryResult),
     };
 };
-x

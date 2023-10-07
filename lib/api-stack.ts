@@ -9,7 +9,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Duration } from "aws-cdk-lib";
 
-export interface APISTACKProps extends cdk.StackProps {
+export interface APIStackProps extends cdk.StackProps {
     vpc: ec2.Vpc;
 }
 

@@ -1,8 +1,51 @@
-# Welcome to your CDK TypeScript project
+# Vegafolio AWS CDK
 
-This is a blank project for CDK development with TypeScript.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Github Rules
+
+We follow Conventional Commits
+
+Reference
+- [A Simplified Convention for Naming Branches and Commits in Git](https://dev.to/varbsan/a-simplified-convention-for-naming-branches-and-commits-in-git-il4)
+
+- [Naming conventions for Git Branches — a Cheatsheet](https://medium.com/@abhay.pixolo/naming-conventions-for-git-branches-a-cheatsheet-8549feca2534)
+
+### Commits
+
+#### Template
+
+> git commit -m 'category(field): do something'
+> git commit -m 'feat(profile): add profile picture upload'
+
+#### category
+
+- feature: A new feature for the user or a particular improvement to existing functionalities.
+- fix: A bug fix.
+- refactor: Code changes that neither fix a bug nor add a feature.
+- doc: Documentation only changes.
+- chore: Simple changes that are not part of the application's logic or business features.
+
+### Branches
+
+### Template
+
+> feature/T-123-new-login-system
+> release/v2.0.1
+
+#### prefixes
+- feature: New feature or enhancement.
+- bugfix: A fix for a certain issue.
+- hotfix: Quick fixes to the codebase applied directly to production.
+- release: Preparing a new product iteration.
+- docs: Documentation only changes.
+
+
+### For Deployment 
+
+### Others
+
+- Delete branch after merged
+
 
 ## Useful commands
 

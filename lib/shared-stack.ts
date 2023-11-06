@@ -24,7 +24,7 @@ export class SharedStack extends cdk.Stack {
                     // Private Subnet with NAT Gateway
                     name: "private-vpc",
                     cidrMask: 24,
-                    subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+                    subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
 
                 }
             ],

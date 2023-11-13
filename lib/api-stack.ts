@@ -38,7 +38,7 @@ export class APIStack extends cdk.Stack {
 
         // Get DB instance address, secretARN and proxyARN
         const dbSecretARN = cdk.Fn.importValue("dbSecretARN");
-        const dbEndpointAddress = cdk.Fn.importValue("dbEndpointAddress");
+        const dbProxyARN = cdk.Fn.importValue("dbProxyARN");
 
         // Add Ingress Rules to DB Security Group (Who is allowed to access this instance)
         dbSG.addIngressRule(
@@ -100,7 +100,7 @@ export class APIStack extends cdk.Stack {
         const runtime = lambda.Runtime.NODEJS_16_X;
         const handler = "handler";
         const environment = {
-            DB_ENDPOINT_ADDRESS: dbEndpointAddress,
+            DB_ENDPOINT_ADDRESS: dbProxyARN,
             DB_NAME: "vegafoliodb",
             DB_SECRET_ARN: dbSecretARN,
         };
@@ -127,7 +127,7 @@ export class APIStack extends cdk.Stack {
             }
         );
 
-//  Company Function
+        //  Company Function
         const getCompanyByIdFunction = new NodejsFunction(
             this,
             "get-company-by-id-function",
@@ -143,7 +143,6 @@ export class APIStack extends cdk.Stack {
                 role: backendRole,
             }
         );
-
 
         //  Company Function
         const postCompanyFunction = new NodejsFunction(
@@ -166,14 +165,14 @@ export class APIStack extends cdk.Stack {
 
         companyResource.addMethod(
             "GET",
-            new apigateway.LambdaIntegration(getCompanyFunction),
+            new apigateway.LambdaIntegration(getCompanyFunction)
         );
 
         const companyByIdResource = companyResource.addResource("{id}");
 
         companyByIdResource.addMethod(
             "GET",
-            new apigateway.LambdaIntegration(getCompanyByIdFunction),
+            new apigateway.LambdaIntegration(getCompanyByIdFunction)
         );
 
         companyResource.addMethod(

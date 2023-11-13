@@ -57,18 +57,17 @@ const databaseStack = new DatabaseStack(app, "database-stack", {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
     },
-
 });
 
 // REST API Stack
-const apiStack = new APIStack(app, "api-stack", {    
+const apiStack = new APIStack(app, "api-stack", {
     vpc: sharedStack.vpc,
     stackName: "api-stack",
     env: {
         region: process.env.CDK_DEFAULT_REGION,
         account: process.env.CDK_DEFAULT_ACCOUNT,
     },
-})
+});
 
 // Landing Page Stack - Cloudfront, Route53, S3
 const landingStack = new LandingStack(app, "landing-stack", {
@@ -87,4 +86,4 @@ databaseStack.addDependency(sharedStack);
 apiStack.addDependency(sharedStack);
 apiStack.addDependency(databaseStack);
 
-landingStack.addDependency(sharedStack)
+landingStack.addDependency(sharedStack);

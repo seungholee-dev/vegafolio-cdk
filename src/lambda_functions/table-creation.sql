@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS vegafoliodb.`user` (
     `firebase_uid` varchar(255) NOT NULL UNIQUE,
     `first_name` nvarchar(100) NOT NULL,
     `last_name` nvarchar(100) NOT NULL,
-    `email` varchar(255) NOT NULL,
+    `email` varchar(255) NOT NULL UNIQUE,
     `username` char(20) NOT NULL UNIQUE,
     `profile_image` varchar(512),
     `birthday` date NULL,
